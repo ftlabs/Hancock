@@ -1,0 +1,36 @@
+{
+  "name": "hancock",
+  "version": "0.1.0",
+  "description": "A Node.js module for determining a similarity between handwritten signatures.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ftlabs/Hancock.git"
+  },
+  "engines": {
+    "node": ">= 6.0.0"
+  },
+  "keywords": [
+    "signatures",
+    "shape",
+    "matching",
+    "FT",
+    "Labs",
+    "Financial",
+    "Times"
+  ],
+  "author": "Sean M. Tracey",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/ftlabs/Hancock/issues"
+  },
+  "homepage": "https://github.com/ftlabs/Hancock#readme",
+  "dependencies": {
+    "denodeify": "^1.2.1",
+    "get-pixels": "^3.3.0",
+    "save-pixels": "^2.3.3"
+  }
+}
