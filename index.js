@@ -72,19 +72,8 @@ const correlate = (function(xs, ys){
 	}
 });
 
-let c1 = undefined;
-let c2 = undefined;
-
-let analyserCanvas = undefined;
-let aCtx = undefined;
-
-let normaliserCanvas = undefined;
-let nCtx = undefined;
-
 function loadImage(i){
-
 	return jimp.read(i).then( img => img );
-
 }
 
 function normaliseImage(image){
