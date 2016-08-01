@@ -14,5 +14,9 @@ console.time('many');
 compare.many('./tmp/n.jpg', ['./tmp/7.png', './tmp/12.png', './tmp/6.png', './tmp/m.png'])
 	.then(res => {
 		console.timeEnd('many');
+		console.log(res);
+	})
+	.catch(err => {
+		console.log(err);
 	})
 ;
