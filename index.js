@@ -1,11 +1,11 @@
 'use strict';
 
 const denodeify = require('denodeify');
-const getPixels = denodeify( require('get-pixels') );
+
 const compare = require('./lib/compare');
 
-compare('./tmp/a.png', './tmp/a.png');
-
-/*getPixels('./tmp/a.png').then(function(pixels) {
-  console.log("got pixels", pixels.data)
-});*/
+compare('./tmp/6.png', './tmp/7.png')
+	.then(sim => {
+		console.log(`These two images are ${sim * 100}% similar.`);
+	})
+;
