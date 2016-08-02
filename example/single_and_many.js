@@ -12,7 +12,7 @@ compare.single('../tmp/n.jpg', '../tmp/7.png')
 ;
 
 console.time('many comparisons');
-compare.many('../tmp/n.jpg', [ '../tmp/12.png', '../tmp/7.png', '../tmp/6.png', '../tmp/m.png', '../tmp/n.jpg'], true)
+compare.many('../tmp/n.jpg', [ '../tmp/12.png', '../tmp/7.png', '../tmp/6.png', '../tmp/m.png', '../tmp/n.jpg', '../tmp/blank.png'], true)
 	.then(res => {
 		console.timeEnd('many comparisons');
 		res.forEach(comparison =>{
