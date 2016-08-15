@@ -6,7 +6,7 @@ This module uses the [Pearson product-moment correlation coefficient](https://en
 
 ## Why would you do this?
 
-Identifying an individuals signature across a multitude of organisations and documents is tough. Hancock doesn't attempt to determine to whom each signature belongs, it only gives a value (between 0 and 1) which 
+Identifying an individuals signature across a multitude of organisations and documents is tough. Hancock doesn't attempt to determine to whom each signature belongs, it only gives a value (between 0 and 1) which can aid a human in identifying a pattern
 
 ## How does it work?
 Hancock doesn't compare each image pixel-for-pixel. It generates a profile of each signature by counting adding up the number of black pixels along a Y-axis for each position along the X-axis of an image. These values are then used to plot a curve which is can be compared to other curves (generated in the same manner) with the Pearson correlation coefficient.
