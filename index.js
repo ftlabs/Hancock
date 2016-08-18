@@ -64,7 +64,7 @@ const correlate = (function(xs, ys){
 		}
 		return (function() {
 			results = [];
-			for (let j = ref = start / step, ref1 = stop / step; ref <= ref1 ? j < ref1 : j > ref1; ref <= ref1 ? j++ : j--){ results.push(j); }
+			for (let j = ref = start / step, ref1 = stop / step; ref <= ref1 ? j < ref1 : j > ref1; ref <= ref1 ? j += 1 : j -= 1){ results.push(j); }
 			return results;
 		}).apply(this).map(function(i) {
 			return Math.floor(i * step);
