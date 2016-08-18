@@ -73,7 +73,10 @@ const correlate = (function(xs, ys){
 });
 
 function loadImage(i){
-	return jimp.read(i);
+	return jimp.read(i).then(img => {
+		img.path = i;
+		return img;
+	});
 }
 
 function normaliseImage(image){
@@ -129,7 +132,7 @@ function normaliseImage(image){
 
 		image.crop(l, t, r - l, b - t);
 		image.resize(normalisedSize, normalisedSize);
-		
+
 		resolve(image);
 
 	});
@@ -144,7 +147,8 @@ function generateProfile(image){
 		const data = {
 			counts : undefined,
 			firstPeak : 0,
-			peaks : []
+			peaks : [],
+			path : image.path
 		};
 
 		const d = source.data;
@@ -211,7 +215,6 @@ function generateProfile(image){
 		}
 
 		data.firstPeak = data.peaks[0];
-		data.isProfile = true;
 		resolve(data);
 	
 	});
@@ -305,35 +308,64 @@ function compareTwoImages(image1, image2){
 }
 
 function compareOneToMany(image1, imagesArray, rank){
-
+	
+	// Generate the profile for the first image;
 	return loadImage(image1)
-		.then(image1 => {
+		.then(image1 => normaliseImage(image1))
+		.then(normalised => generateProfile(normalised))
+		.then(image1Profile => {
+			
+			const images = imagesArray.map(image => {
+				return loadImage(image);
+			});
 
-			const comparisons = imagesArray.map(image => {
-				return compareTwoImages(image1, image);
-			})
+			return Promise.all(images)
+				.then(images => {
+					return Promise.all(
+						images.map(image => {
+							return normaliseImage(image)
+								.then(n => generateProfile(n))
+							;
+						})
+					);
+					
+				})
+				.then(profiles => {
+					
+					const comp = profiles.map(p => {
+						return compareTheData(image1Profile, p)
+							.then(sim => {
+								return {
+									a : image1,
+									b : p.path,
+									similarity : sim
+								};
+							})
+						;
+					});
 
-			return Promise.all(comparisons)
-				.then(comps => {
-					if(rank){
-						return comps.sort( (a, b) => {
-							if(a.similarity > b.similarity){
-								return -1;
-							} else if(a.similarity < b.similarity){
-								return 1;
-							}
-							return 0;
-						});
-					} else {
-						return comps;
-					}
+					return Promise.all(comp);
+
 				})
 			;
 
+		}).then(comparisons => {
+
+			if(!rank){
+				return comparisons;
+			} else {
+				return comparisons.sort( (a, b) => {
+					if(a.similarity > b.similarity){
+						return -1;
+					} else if(a.similarity < b.similarity){
+						return 1;
+					}
+					return 0;
+				});
+			}
+
 		})
 	;
-
-
 
 }
 
