@@ -19,7 +19,7 @@ const correlate = (function(xs, ys){
 		let mx;
 		mx = mean(xs);
 		return Math.sqrt(mean(map(xs, function(x) {
-			return Math.pow(x - mx, 2);
+			return (x - mx) * (x - mx); 
 		})));
 	}
 
@@ -52,7 +52,7 @@ const correlate = (function(xs, ys){
 	}
 
 	function range (start, stop, step) {
-		let j, ref, ref1, results;
+		let j, ref, results;
 		if (stop == null) {
 			stop = start;
 		}
@@ -64,16 +64,19 @@ const correlate = (function(xs, ys){
 		}
 		return (function() {
 			results = [];
-			for (let j = ref = start / step, ref1 = stop / step; ref <= ref1 ? j < ref1 : j > ref1; ref <= ref1 ? j++ : j--){ results.push(j); }
+			for (let j = ref = start / step, ref1 = stop / step; ref <= ref1 ? j < ref1 : j > ref1; ref <= ref1 ? j += 1 : j -= 1){ results.push(j); }
 			return results;
 		}).apply(this).map(function(i) {
-			return Math.floor(i * step);
+			return (i * step) | 0;
 		});
 	}
 });
 
 function loadImage(i){
-	return jimp.read(i).then( img => img );
+	return jimp.read(i).then(img => {
+		img.path = i;
+		return img;
+	});
 }
 
 function normaliseImage(image){
@@ -92,13 +95,15 @@ function normaliseImage(image){
 		let l = imageWidth;
 		let r = 0;
 		let b = 0;
-		
-		for(let yy = 0; yy < d.length; yy += 4){
-			
+
+		const dSize = d.length;
+		let yy = 0
+
+		while(yy < dSize){
 			const x = (yy / 4) % imageWidth;
 			const y = ( (yy / 4) / imageWidth) | 0;
 
-			let g = parseInt((d[yy] + d[yy + 1] + d[yy + 2]) / 3);
+			let g = ((d[yy] + d[yy + 1] + d[yy + 2]) / 3) | 0;
 
 			if(g < 128){
 				g = 0;
@@ -125,11 +130,13 @@ function normaliseImage(image){
 
 			d[yy] = d[yy + 1] = d[yy + 2] = g;
 
+			yy += 4
+
 		}
 
 		image.crop(l, t, r - l, b - t);
 		image.resize(normalisedSize, normalisedSize);
-		
+
 		resolve(image);
 
 	});
@@ -144,7 +151,8 @@ function generateProfile(image){
 		const data = {
 			counts : undefined,
 			firstPeak : 0,
-			peaks : []
+			peaks : [],
+			path : image.path
 		};
 
 		const d = source.data;
@@ -239,7 +247,7 @@ function compareTheData(data1, data2){
 
 			const comparitiveChunk = data1.counts.slice( offset + g, (offset + g) + sectionSize );
 
-			let v = correlate( shiftees, comparitiveChunk ); 
+			const v = correlate( shiftees, comparitiveChunk ); 
 
 			if(v > bestSimilarity){
 				bestSimilarity = v;
@@ -259,7 +267,19 @@ function compareTheData(data1, data2){
 
 function compareTwoImages(image1, image2){
 
-	const pix = [ loadImage(image1), loadImage(image2) ];
+	const pix = [];
+
+	if(image1.bitmap === undefined){
+		pix.push(loadImage(image1));
+	} else {
+		pix.push( Promise.resolve(image1)); 
+	}
+
+	if(image2.bitmap === undefined){
+		pix.push(loadImage(image2));
+	} else {
+		pix.push( Promise.resolve(image2)); 
+	}
 
 	return Promise.all(pix)
 		.then( res => {
@@ -273,7 +293,7 @@ function compareTwoImages(image1, image2){
 
 					return Promise.all(profile)
 						.then(profiles => {
-							return comp = compareTheData(profiles[0], profiles[1]).then(sim => {
+							return compareTheData(profiles[0], profiles[1]).then(sim => {
 								return {
 									a : image1,
 									b : image2,
@@ -292,15 +312,53 @@ function compareTwoImages(image1, image2){
 }
 
 function compareOneToMany(image1, imagesArray, rank){
+	
+	// Generate the profile for the first image;
+	return loadImage(image1)
+		.then(image1 => normaliseImage(image1))
+		.then(normalised => generateProfile(normalised))
+		.then(image1Profile => {
+			
+			const images = imagesArray.map(image => {
+				return loadImage(image);
+			});
 
-	const comparisons = imagesArray.map(image => {
-		return compareTwoImages(image1, image);
-	})
+			return Promise.all(images)
+				.then(images => {
+					return Promise.all(
+						images.map(image => {
+							return normaliseImage(image)
+								.then(n => generateProfile(n))
+							;
+						})
+					);
+					
+				})
+				.then(profiles => {
+					
+					const comp = profiles.map(p => {
+						return compareTheData(image1Profile, p)
+							.then(sim => {
+								return {
+									a : image1,
+									b : p.path,
+									similarity : sim
+								};
+							})
+						;
+					});
 
-	return Promise.all(comparisons)
-		.then(comps => {
-			if(rank){
-				return comps.sort( (a, b) => {
+					return Promise.all(comp);
+
+				})
+			;
+
+		}).then(comparisons => {
+
+			if(!rank){
+				return comparisons;
+			} else {
+				return comparisons.sort( (a, b) => {
 					if(a.similarity > b.similarity){
 						return -1;
 					} else if(a.similarity < b.similarity){
@@ -308,12 +366,10 @@ function compareOneToMany(image1, imagesArray, rank){
 					}
 					return 0;
 				});
-			} else {
-				return comps;
 			}
+
 		})
 	;
-
 
 }
 
