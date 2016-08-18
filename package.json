@@ -1,6 +1,6 @@
 {
   "name": "hancock",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "A Node.js module for determining a similarity between handwritten signatures.",
   "main": "index.js",
   "scripts": {
