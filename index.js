@@ -19,7 +19,7 @@ const correlate = (function(xs, ys){
 		let mx;
 		mx = mean(xs);
 		return Math.sqrt(mean(map(xs, function(x) {
-			return Math.pow(x - mx, 2);
+			return (x - mx) * (x - mx); 
 		})));
 	}
 
@@ -52,7 +52,7 @@ const correlate = (function(xs, ys){
 	}
 
 	function range (start, stop, step) {
-		let j, ref, ref1, results;
+		let j, ref, results;
 		if (stop == null) {
 			stop = start;
 		}
@@ -67,7 +67,7 @@ const correlate = (function(xs, ys){
 			for (let j = ref = start / step, ref1 = stop / step; ref <= ref1 ? j < ref1 : j > ref1; ref <= ref1 ? j += 1 : j -= 1){ results.push(j); }
 			return results;
 		}).apply(this).map(function(i) {
-			return Math.floor(i * step);
+			return (i * step) | 0;
 		});
 	}
 });
@@ -95,13 +95,15 @@ function normaliseImage(image){
 		let l = imageWidth;
 		let r = 0;
 		let b = 0;
-		
-		for(let yy = 0; yy < d.length; yy += 4){
-			
+
+		const dSize = d.length;
+		let yy = 0
+
+		while(yy < dSize){
 			const x = (yy / 4) % imageWidth;
 			const y = ( (yy / 4) / imageWidth) | 0;
 
-			let g = parseInt((d[yy] + d[yy + 1] + d[yy + 2]) / 3);
+			let g = ((d[yy] + d[yy + 1] + d[yy + 2]) / 3) | 0;
 
 			if(g < 128){
 				g = 0;
@@ -127,6 +129,8 @@ function normaliseImage(image){
 			}
 
 			d[yy] = d[yy + 1] = d[yy + 2] = g;
+
+			yy += 4
 
 		}
 
@@ -243,7 +247,7 @@ function compareTheData(data1, data2){
 
 			const comparitiveChunk = data1.counts.slice( offset + g, (offset + g) + sectionSize );
 
-			let v = correlate( shiftees, comparitiveChunk ); 
+			const v = correlate( shiftees, comparitiveChunk ); 
 
 			if(v > bestSimilarity){
 				bestSimilarity = v;
@@ -289,7 +293,7 @@ function compareTwoImages(image1, image2){
 
 					return Promise.all(profile)
 						.then(profiles => {
-							return comp = compareTheData(profiles[0], profiles[1]).then(sim => {
+							return compareTheData(profiles[0], profiles[1]).then(sim => {
 								return {
 									a : image1,
 									b : image2,
