@@ -73,7 +73,7 @@ const correlate = (function(xs, ys){
 });
 
 function loadImage(i){
-	return jimp.read(i).then( img => img );
+	return jimp.read(i);
 }
 
 function normaliseImage(image){
@@ -211,6 +211,7 @@ function generateProfile(image){
 		}
 
 		data.firstPeak = data.peaks[0];
+		data.isProfile = true;
 		resolve(data);
 	
 	});
@@ -259,7 +260,19 @@ function compareTheData(data1, data2){
 
 function compareTwoImages(image1, image2){
 
-	const pix = [ loadImage(image1), loadImage(image2) ];
+	const pix = [];
+
+	if(image1.bitmap === undefined){
+		pix.push(loadImage(image1));
+	} else {
+		pix.push( Promise.resolve(image1)); 
+	}
+
+	if(image2.bitmap === undefined){
+		pix.push(loadImage(image2));
+	} else {
+		pix.push( Promise.resolve(image2)); 
+	}
 
 	return Promise.all(pix)
 		.then( res => {
@@ -293,26 +306,33 @@ function compareTwoImages(image1, image2){
 
 function compareOneToMany(image1, imagesArray, rank){
 
-	const comparisons = imagesArray.map(image => {
-		return compareTwoImages(image1, image);
-	})
+	return loadImage(image1)
+		.then(image1 => {
 
-	return Promise.all(comparisons)
-		.then(comps => {
-			if(rank){
-				return comps.sort( (a, b) => {
-					if(a.similarity > b.similarity){
-						return -1;
-					} else if(a.similarity < b.similarity){
-						return 1;
+			const comparisons = imagesArray.map(image => {
+				return compareTwoImages(image1, image);
+			})
+
+			return Promise.all(comparisons)
+				.then(comps => {
+					if(rank){
+						return comps.sort( (a, b) => {
+							if(a.similarity > b.similarity){
+								return -1;
+							} else if(a.similarity < b.similarity){
+								return 1;
+							}
+							return 0;
+						});
+					} else {
+						return comps;
 					}
-					return 0;
-				});
-			} else {
-				return comps;
-			}
+				})
+			;
+
 		})
 	;
+
 
 
 }
